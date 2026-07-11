@@ -3,39 +3,36 @@ import {
   AutoComplete, Badge, Button, Card, Col, DatePicker, Input, InputNumber, Modal, Row, Select, Space, Table, Tag, Tooltip, message
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { getCompanies, searchCompanies, mailCompaniesTopActive } from '../api';
-import ComposeMailModal from './ComposeMailModal.jsx';
-import { getPresets, savePreset, deletePreset, loadPreset } from '../filterPresets';
-import locations from '../locations.json';
-
-const locationMap = Object.fromEntries(locations.map(l => [l.id, l.name]));
-const dateOnly = d => (d ? String(d).replace('T', ' ').slice(0, 10) : null);
-
-// Default to ACTIVE companies ('all' disables the status filter on the backend)
-const EMPTY_FILTERS = {
-  search: '', status: '1', locations: [], lastPosted: null,
-  minExp: undefined, maxExp: undefined, minSal: undefined, maxSal: undefined
-};
+import { mailCompaniesTopActive } from '../../api';
+import ComposeMailModal from '../../components/ComposeMailModal.jsx';
+import { ActivityStatusTag } from '../../components/StatusTag';
+import LocationTags from '../../components/LocationTags';
+import { getPresets, savePreset, deletePreset, loadPreset } from '../../utils/filterPresets';
+import { useLocations } from '../../context/LocationContext';
+import { EMPTY_FILTERS } from '../../constants';
+import { dateOnly } from '../../utils/formatters';
+import { useCompanies } from '../../hooks/useCompanies';
 
 export default function CompaniesPage() {
   const navigate = useNavigate();
+  const { locations } = useLocations();
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [options, setOptions] = useState([]);
-  const [sort, setSort] = useState(null); // { sortBy, sortDir }
-  const [data, setData] = useState({ companies: [], total: 0, page: 1, limit: 20 });
-  const [loading, setLoading] = useState(false);
+  const [sort, setSort] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [topN, setTopN] = useState(5);
   const [mailOpen, setMailOpen] = useState(false);
   const [presets, setPresets] = useState({});
   const [selectedPreset, setSelectedPreset] = useState(undefined);
+  
+  const { data, loading, loadCompanies, searchAutocomplete } = useCompanies();
 
   useEffect(() => { setPresets(getPresets()); }, []);
 
   const applyPreset = name => {
     setSelectedPreset(name);
     const f = loadPreset(name);
-    if (f) { setFilters(f); load(1, f); }
+    if (f) { setFilters(f); loadCompanies(1, f); }
   };
 
   const doSavePreset = () => {
@@ -59,43 +56,18 @@ export default function CompaniesPage() {
     message.success('Preset deleted');
   };
 
-  const load = useCallback(async (page = 1, f = filters, s = sort) => {
-    setLoading(true);
-    try {
-      const params = {
-        page,
-        limit: 20,
-        search: f.search || undefined,
-        status: f.status,
-        locations: f.locations.length ? f.locations.join(',') : undefined,
-        lastPostedFrom: f.lastPosted?.[0] ? f.lastPosted[0].format('YYYY-MM-DD') : undefined,
-        lastPostedTo: f.lastPosted?.[1] ? f.lastPosted[1].format('YYYY-MM-DD') : undefined,
-        minExp: f.minExp, maxExp: f.maxExp, minSal: f.minSal, maxSal: f.maxSal,
-        sortBy: s?.sortBy, sortDir: s?.sortDir
-      };
-      setData(await getCompanies(params));
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, sort]);
-
-  useEffect(() => { load(1, EMPTY_FILTERS); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { loadCompanies(1, EMPTY_FILTERS); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSearchTyping = async term => {
     setFilters(f => ({ ...f, search: term }));
-    if (term && term.length >= 2) {
-      const results = await searchCompanies(term);
-      setOptions(results.map(c => ({
-        value: c.organisation || c.company_name || c.domain,
-        label: `${c.organisation || c.company_name || '(no name)'} — ${c.domain || ''} (${c.recruiter_count})`,
-        company: c
-      })));
-    } else {
-      setOptions([]);
-    }
+    const results = await searchAutocomplete(term);
+    setOptions(results.map(c => ({
+      value: c.organisation || c.company_name || c.domain,
+      label: `${c.organisation || c.company_name || '(no name)'} — ${c.domain || ''} (${c.recruiter_count})`,
+      company: c
+    })));
   };
 
-  // column key === backend SORTABLE key; sorter: true → sorting handled server-side
   const columns = [
     { title: 'ID', key: 'company_id', dataIndex: 'company_id', width: 80, sorter: true },
     {
@@ -105,7 +77,7 @@ export default function CompaniesPage() {
     { title: 'Domain', key: 'domain', dataIndex: 'domain', sorter: true },
     {
       title: 'Status', key: 'status', dataIndex: 'status', width: 100, sorter: true,
-      render: s => (s === 1 ? <Tag color="green">Active</Tag> : <Tag>Inactive</Tag>)
+      render: s => <ActivityStatusTag status={s} />
     },
     {
       title: 'Experience', key: 'min', width: 130, sorter: true,
@@ -118,13 +90,11 @@ export default function CompaniesPage() {
     {
       title: 'Last job posted', key: 'last_job_posted_date', dataIndex: 'last_job_posted_date',
       width: 160, sorter: true,
-      render: d => (d ? String(d).replace('T', ' ').slice(0, 10) : '—')
+      render: d => dateOnly(d) || '—'
     },
     {
       title: 'Locations',
-      render: (_, c) => (c.company_location_ids || '')
-        .split(',').filter(Boolean).slice(0, 6)
-        .map(id => <Tag key={id}>{locationMap[id] || id}</Tag>)
+      render: (_, c) => <LocationTags csv={c.company_location_ids} max={6} />
     },
     {
       title: 'Recruiters (active / total)', key: 'active_recruiter_count', width: 170, sorter: true,
@@ -149,7 +119,7 @@ export default function CompaniesPage() {
       ? { sortBy: sorter.columnKey, sortDir: sorter.order === 'ascend' ? 'asc' : 'desc' }
       : null;
     setSort(s);
-    load(pagination.current, filters, s);
+    loadCompanies(pagination.current, filters, s);
   };
 
   return (
@@ -217,9 +187,9 @@ export default function CompaniesPage() {
           </Col>
           <Col xs={24} md={12}>
             <Space wrap>
-              <Button type="primary" onClick={() => load(1)}>Apply filters</Button>
+              <Button type="primary" onClick={() => loadCompanies(1)}>Apply filters</Button>
               <Button onClick={() => {
-                setFilters(EMPTY_FILTERS); setOptions([]); setSelectedPreset(undefined); load(1, EMPTY_FILTERS);
+                setFilters(EMPTY_FILTERS); setOptions([]); setSelectedPreset(undefined); loadCompanies(1, EMPTY_FILTERS);
               }}>Reset</Button>
               <Select
                 style={{ width: 180 }}
@@ -260,7 +230,6 @@ export default function CompaniesPage() {
         rowSelection={{ selectedRowKeys: selectedIds, onChange: setSelectedIds, preserveSelectedRowKeys: true }}
         onRow={c => ({
           onClick: e => {
-            // don't hijack clicks on the selection checkbox
             if (e.target.closest('.ant-checkbox-wrapper, .ant-table-selection-column')) return;
             window.open(`/company/${c.company_id}`, '_blank', 'noopener');
           },
@@ -281,7 +250,7 @@ export default function CompaniesPage() {
         title={`Mail top ${topN} active recruiters of ${selectedIds.length} selected compan${selectedIds.length === 1 ? 'y' : 'ies'}`}
         recipientHint={`For each selected company, the ${topN} recruiters who posted a job most recently will be queued. Inactive companies with no active recruiters are skipped.`}
         onSend={values => mailCompaniesTopActive({ companyIds: selectedIds, topN, ...values })
-          .then(r => { load(data.page); return r; })}
+          .then(r => { loadCompanies(data.page); return r; })}
         onClose={() => setMailOpen(false)}
       />
     </Space>

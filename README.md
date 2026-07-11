@@ -4,8 +4,8 @@ Company / recruiter explorer over the hirist export data (`company_profile` + `r
 with filters and recruiter mailing. Modeled on the original `recly` / `recly-fe` projects.
 
 ```
-backend/   Express + mysql2 + nodemailer API (port 4000)
-frontend/  Vite + React 19 + antd UI (port 5173, proxies /api to the backend)
+backend/   Express + mysql2 + nodemailer API (port 4000) using a layered Service/Repository architecture
+frontend/  Vite + React 19 + antd UI (port 5173, proxies /api to the backend) using Domain-driven components
 ```
 
 ## Data
@@ -114,7 +114,7 @@ Typical workflow
 Customizing (no restart / rerun needed)
 
 - Templates → edit backend/global/templates.json
-- Resume → replace backend/data/Nikhil_Mittal_Resume.pdf (or change MAIL_ATTACHMENT_PATH in .env).
+- Resume → replace backend/data/Jay_Agrawal_Resume.pdf (or change MAIL_ATTACHMENT_PATH in .env).
 - Pacing / from-address / SMTP → edit backend/.eno apply).
 
 One reminder: send:mails is live right now (your v), so it will really send. Use --dryRun or thetest-email box first.

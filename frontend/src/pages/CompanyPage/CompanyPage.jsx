@@ -1,45 +1,27 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Button, Card, Col, DatePicker, Descriptions, Input, Row, Select, Space, Statistic, Table, Tag, message
 } from 'antd';
 import { useParams, Link } from 'react-router-dom';
-import { getCompany, getCompanyRecruiters, mailCompanyActive, mailRecruiters } from '../api';
-import ComposeMailModal from './ComposeMailModal.jsx';
-import locations from '../locations.json';
+import { getCompany, mailCompanyActive, mailRecruiters } from '../../api';
+import ComposeMailModal from '../../components/ComposeMailModal.jsx';
+import { ActivityStatusTag } from '../../components/StatusTag';
+import LocationTags from '../../components/LocationTags';
+import { dateOnly } from '../../utils/formatters';
+import { useRecruiters } from '../../hooks/useRecruiters';
 
-const locationMap = Object.fromEntries(locations.map(l => [l.id, l.name]));
-
-const locTags = csv => String(csv || '')
-  .split(',').filter(Boolean)
-  .map(id => <Tag key={id}>{locationMap[id] || id}</Tag>);
-
-const fmtDate = d => (d ? String(d).replace('T', ' ').slice(0, 10) : '—');
+const fmtDate = d => dateOnly(d) || '—';
 
 export default function CompanyPage() {
   const { companyId } = useParams();
   const [company, setCompany] = useState(null);
-  const [recruiters, setRecruiters] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [nameSearch, setNameSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('1'); // default: active recruiters
+  const [statusFilter, setStatusFilter] = useState('1');
   const [lastPosted, setLastPosted] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
-  const [mailMode, setMailMode] = useState(null); // 'active' | 'selected' | null
+  const [mailMode, setMailMode] = useState(null);
 
-  const loadRecruiters = useCallback(async (overrides = {}) => {
-    const f = { name: nameSearch, status: statusFilter, lastPosted, ...overrides };
-    setLoading(true);
-    try {
-      setRecruiters(await getCompanyRecruiters(companyId, {
-        name: f.name || undefined,
-        status: f.status,
-        lastPostedFrom: f.lastPosted?.[0] ? f.lastPosted[0].format('YYYY-MM-DD') : undefined,
-        lastPostedTo: f.lastPosted?.[1] ? f.lastPosted[1].format('YYYY-MM-DD') : undefined
-      }));
-    } finally {
-      setLoading(false);
-    }
-  }, [companyId, nameSearch, statusFilter, lastPosted]);
+  const { recruiters, loading, loadRecruiters } = useRecruiters(companyId);
 
   useEffect(() => {
     getCompany(companyId).then(setCompany).catch(() => message.error('company not found'));
@@ -49,7 +31,6 @@ export default function CompanyPage() {
   const byStr = key => (a, b) => String(a[key] || '').localeCompare(String(b[key] || ''));
   const byNum = key => (a, b) => (a[key] || 0) - (b[key] || 0);
 
-  // full list is loaded client-side, so plain antd sorters are enough here
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 90, sorter: byNum('id') },
     { title: 'Name', dataIndex: 'recname', sorter: byStr('recname') },
@@ -57,7 +38,7 @@ export default function CompanyPage() {
     { title: 'Designation', dataIndex: 'designation', sorter: byStr('designation') },
     {
       title: 'Status', dataIndex: 'status', width: 100, sorter: byNum('status'),
-      render: s => (s === 1 ? <Tag color="green">Active</Tag> : <Tag>Inactive</Tag>)
+      render: s => <ActivityStatusTag status={s} />
     },
     {
       title: 'Last job posted', dataIndex: 'last_job_posted_date', width: 150,
@@ -73,7 +54,7 @@ export default function CompanyPage() {
       title: 'Registered', dataIndex: 'date_created', width: 150,
       sorter: byStr('date_created'), render: fmtDate
     },
-    { title: 'Job locations', render: (_, r) => locTags(r.location_ids) }
+    { title: 'Job locations', render: (_, r) => <LocationTags csv={r.location_ids} /> }
   ];
 
   return (
@@ -88,7 +69,7 @@ export default function CompanyPage() {
                 <Descriptions.Item label="Company ID">{company.company_id}</Descriptions.Item>
                 <Descriptions.Item label="Domain">{company.domain || '—'}</Descriptions.Item>
                 <Descriptions.Item label="Status">
-                  {company.status === 1 ? <Tag color="green">Active</Tag> : <Tag>Inactive</Tag>}
+                  <ActivityStatusTag status={company.status} />
                 </Descriptions.Item>
                 <Descriptions.Item label="Last job posted">
                   {fmtDate(company.last_job_posted_date)}
@@ -101,7 +82,7 @@ export default function CompanyPage() {
                     ? `${company.minsal}–${company.maxsal}` : '—'}
                 </Descriptions.Item>
                 <Descriptions.Item label="Locations" span={2}>
-                  {locTags(company.company_location_ids) || '—'}
+                  <LocationTags csv={company.company_location_ids} />
                 </Descriptions.Item>
               </Descriptions>
             </Col>

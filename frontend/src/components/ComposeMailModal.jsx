@@ -14,12 +14,12 @@ export default function ComposeMailModal({ open, title, recipientHint, onSend, o
   const [sending, setSending] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [templateId, setTemplateId] = useState(undefined);
-  const [attachment, setAttachment] = useState('Nikhil_Mittal_Resume.pdf');
+  const [attachment, setAttachment] = useState('Jay_Agrawal_Resume.pdf');
   const subject = Form.useWatch('subject', form);
   const body = Form.useWatch('body', form);
 
   useEffect(() => {
-    if (open) getTemplates().then(setTemplates).catch(() => {});
+    if (open) getTemplates().then(setTemplates).catch(() => { });
   }, [open]);
 
   const applyTemplate = id => {

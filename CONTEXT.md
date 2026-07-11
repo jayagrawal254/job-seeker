@@ -11,7 +11,7 @@ by the backend. Covers every table, field, format, JSON file, script, and API.
 >
 > **Exception (must stay in the recruiter-api repo):** the *runnable* copies of
 > `recruiterProfileJsonExport.js` and `metaRecruiterJsonExport.js` live in
-> `~/orca/workspaces/recruiter-api/Relevence-job-data` (branch `nikhilInfoedge/Relevence-job-data`)
+> `~/orca/workspaces/recruiter-api/Relevence-job-data` (branch `jay/Relevence-job-data`)
 > because they `require` that repo's `config/index.js`, `db/mysql/index.js`, and
 > `utilities/setEnvironment.js` (DB pool + vault). They **cannot execute from `recly-v2`** —
 > the copies in `pipeline/db-exports/` are for reference/version-keeping only. Run the exports
@@ -234,23 +234,20 @@ company_profile.sql, recruiter_profile.sql      source dumps (copied into backen
 
 ### 6b. `recly-v2/backend`
 ```
-app.js                     Express app (cors, json, /api router)
-server.js                  boot
-config/config.js           all env-driven config (db, mail, resumes, tracking)
-db/createconnection.js     mysql2 pool
-global/
-  locations.js             loads locations.json + builds locationMap
-  locations.json           128 locations hardcoded from recruiter-admin src/models/location.js
-  templates.json           5 SDE email templates (id, name, subject, body) — customise here
-dao/
-  company.js               listCompanies (filters/sort/badges), searchCompanies, getCompany
-  recruiter.js             getRecruitersByCompanyId, getActiveRecruitersByCompanyId,
-                           getTopActiveRecruitersByCompanyId, getRecruitersByIds, getRecruiter
-  mail.js                  getTemplates, queueMails, getPendingMails, mark*, listLogs,
-                           listLogsGrouped, mailStats, markOpened/BouncedByMessageId
-  resume.js                listResumes, resolveResume (path-traversal safe), DIR
-services/mail.js           createTransporter (SMTP), sendMailNow (test send), DRY_RUN
-routes/index.js            all API routes + multer resume upload + tracking pixel
+package.json               scripts (test, dev, start, import:data, setup:mail, etc.)
+jest.config.js             Jest test configuration
+src/
+  server.js                boot
+  app.js                   Express app (cors, json, /api router)
+  config/index.js          all env-driven config (db, mail, resumes, tracking)
+  constants/               locations.json, templates.json, locations.js
+  db/connection.js         mysql2 pool
+  controllers/             route handlers (company, recruiter, mail, resume, tracking)
+  services/                business logic (mail, template, mailQueue, etc.)
+  repositories/            database access (company, recruiter, mail, resume)
+  routes/                  domain route definitions
+  middleware/              errorHandler, asyncHandler, requestLogger
+  utils/                   errors, logger, parseFrom, personalise
 scripts/
   importData.js            create DB + import the two SQL dumps    (npm run import:data)
   createMailTables.js      create/alter mail_log                   (npm run setup:mail)
@@ -258,15 +255,25 @@ scripts/
   syncMailEvents.js        pull opens/bounces from Brevo API       (npm run sync:events)
 data/
   company_profile.sql, recruiter_profile.sql   (copied from pipeline)
-  resumes/                 uploaded resumes (default Nikhil_Mittal_Resume.pdf)
+  resumes/                 uploaded resumes (default Jay_Agrawal_Resume.pdf)
+__tests__/                 unit and integration tests
 .env                       secrets/config (NOT committed)
 ```
 
-### Frontend (`recly-v2/frontend`, Vite + React 19 + antd, proxies `/api` → :4000)
-`pages/CompaniesPage.jsx` (home: filters, saved-filter cookie presets, bulk top-N mail,
-mailed badges), `CompanyPage.jsx` (recruiters + per-company mail), `MailLogsPage.jsx`
-(KPI dashboard, 7-day breakdown, company→recruiter→mail tree, test-email panel),
-`ComposeMailModal.jsx`, `ResumeSelect.jsx`, `MailPreview.jsx`, `filterPresets.js`, `api.js`.
+### 6c. `recly-v2/frontend` (Vite + React 19 + antd, proxies `/api` → :4000)
+```
+src/
+  main.jsx                 Entry point + providers (LocationProvider, ErrorBoundary)
+  App.jsx                  Layout (Header, Content)
+  api/                     Domain-specific API clients (company, recruiter, mail, location, resume)
+  components/              Shared components (StatusTag, LocationTags, ComposeMailModal, ErrorBoundary)
+  hooks/                   Custom data fetching hooks (useCompanies, useRecruiters, useMailStats)
+  context/                 Global state (LocationContext)
+  constants/               Shared UI constants
+  utils/                   Formatters, filterPresets
+  styles/                  Global CSS
+  pages/                   Page components (CompaniesPage, CompanyPage, MailLogsPage)
+```
 
 ---
 
@@ -325,7 +332,7 @@ mailed badges), `CompanyPage.jsx` (recruiters + per-company mail), `MailLogsPage
 - **Brevo** (optional, better tracking/localhost-friendly): set `BREVO_API_KEY` → send script
   uses Brevo API and `sync:events` works. Currently commented out.
 - Pacing/caps: `MAIL_MIN_GAP_MS=30000`, `MAIL_MAX_GAP_MS=60000`, `MAIL_MAX_PER_RUN=100`.
-- Resume attachment: `MAIL_RESUMES_DIR`, `MAIL_DEFAULT_RESUME` (default `Nikhil_Mittal_Resume.pdf`).
+- Resume attachment: `MAIL_RESUMES_DIR`, `MAIL_DEFAULT_RESUME` (default `Jay_Agrawal_Resume.pdf`).
 - Open tracking (SMTP path) needs a public `TRACKING_BASE_URL` (tunnel) to register real opens.
 
 ---
