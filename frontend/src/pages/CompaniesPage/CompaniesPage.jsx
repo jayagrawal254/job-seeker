@@ -187,7 +187,7 @@ export default function CompaniesPage() {
           </Col>
           <Col xs={24} md={12}>
             <Space wrap>
-              <Button type="primary" onClick={() => loadCompanies(1)}>Apply filters</Button>
+              <Button type="primary" onClick={() => loadCompanies(1, filters, sort)}>Apply filters</Button>
               <Button onClick={() => {
                 setFilters(EMPTY_FILTERS); setOptions([]); setSelectedPreset(undefined); loadCompanies(1, EMPTY_FILTERS);
               }}>Reset</Button>
@@ -250,7 +250,7 @@ export default function CompaniesPage() {
         title={`Mail top ${topN} active recruiters of ${selectedIds.length} selected compan${selectedIds.length === 1 ? 'y' : 'ies'}`}
         recipientHint={`For each selected company, the ${topN} recruiters who posted a job most recently will be queued. Inactive companies with no active recruiters are skipped.`}
         onSend={values => mailCompaniesTopActive({ companyIds: selectedIds, topN, ...values })
-          .then(r => { loadCompanies(data.page); return r; })}
+          .then(r => { loadCompanies(data.page, filters, sort); return r; })}
         onClose={() => setMailOpen(false)}
       />
     </Space>

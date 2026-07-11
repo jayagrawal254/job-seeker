@@ -12,7 +12,7 @@ export default function App() {
       <Header style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
         <Link to="/">
           <Typography.Title level={3} style={{ color: '#fff', margin: 0 }}>
-            Recly v2
+            Recly v3
           </Typography.Title>
         </Link>
         <Menu
