@@ -1,0 +1,514 @@
+[
+ {
+  "id": 87,
+  "name": "Metros"
+ },
+ {
+  "id": 88,
+  "name": "Anywhere in India/Multiple Locations"
+ },
+ {
+  "id": 89,
+  "name": "Overseas/International"
+ },
+ {
+  "id": 0,
+  "name": "Any Location"
+ },
+ {
+  "id": 1,
+  "name": "Delhi NCR"
+ },
+ {
+  "id": 2,
+  "name": "Mumbai"
+ },
+ {
+  "id": 3,
+  "name": "Bangalore"
+ },
+ {
+  "id": 4,
+  "name": "Hyderabad"
+ },
+ {
+  "id": 5,
+  "name": "Kolkata"
+ },
+ {
+  "id": 6,
+  "name": "Chennai"
+ },
+ {
+  "id": 7,
+  "name": "Pune"
+ },
+ {
+  "id": 8,
+  "name": "Gujarat"
+ },
+ {
+  "id": 9,
+  "name": "Maharashtra"
+ },
+ {
+  "id": 10,
+  "name": "MP"
+ },
+ {
+  "id": 11,
+  "name": "Jaipur"
+ },
+ {
+  "id": 12,
+  "name": "Guwahati"
+ },
+ {
+  "id": 13,
+  "name": "Goa"
+ },
+ {
+  "id": 14,
+  "name": "Chandigarh"
+ },
+ {
+  "id": 15,
+  "name": "Punjab"
+ },
+ {
+  "id": 16,
+  "name": "Haryana"
+ },
+ {
+  "id": 17,
+  "name": "Kerala"
+ },
+ {
+  "id": 18,
+  "name": "Orisa"
+ },
+ {
+  "id": 19,
+  "name": "Bihar"
+ },
+ {
+  "id": 20,
+  "name": "Jharkhand"
+ },
+ {
+  "id": 21,
+  "name": "UP"
+ },
+ {
+  "id": 31,
+  "name": "Karnataka"
+ },
+ {
+  "id": 32,
+  "name": "Tamil Nadu"
+ },
+ {
+  "id": 33,
+  "name": "Rajasthan"
+ },
+ {
+  "id": 34,
+  "name": "Andhra Pradesh"
+ },
+ {
+  "id": 35,
+  "name": "Telangana"
+ },
+ {
+  "id": 36,
+  "name": "Delhi"
+ },
+ {
+  "id": 37,
+  "name": "Gurgaon/Gurugram"
+ },
+ {
+  "id": 38,
+  "name": "Noida"
+ },
+ {
+  "id": 39,
+  "name": "Greater Noida"
+ },
+ {
+  "id": 40,
+  "name": "Faridabad"
+ },
+ {
+  "id": 41,
+  "name": "Ghaziabad"
+ },
+ {
+  "id": 42,
+  "name": "Jammu & Kashmir"
+ },
+ {
+  "id": 43,
+  "name": "Jammu"
+ },
+ {
+  "id": 44,
+  "name": "Srinagar"
+ },
+ {
+  "id": 45,
+  "name": "Amritsar"
+ },
+ {
+  "id": 46,
+  "name": "Jalandhar"
+ },
+ {
+  "id": 47,
+  "name": "Patiala"
+ },
+ {
+  "id": 48,
+  "name": "Ludhiana"
+ },
+ {
+  "id": 49,
+  "name": "Sonipat"
+ },
+ {
+  "id": 50,
+  "name": "Panipat"
+ },
+ {
+  "id": 51,
+  "name": "Udaipur"
+ },
+ {
+  "id": 52,
+  "name": "Jodhpur"
+ },
+ {
+  "id": 53,
+  "name": "Ahmedabad"
+ },
+ {
+  "id": 54,
+  "name": "Surat"
+ },
+ {
+  "id": 55,
+  "name": "Gandhinagar"
+ },
+ {
+  "id": 56,
+  "name": "Vadodara/Baroda"
+ },
+ {
+  "id": 57,
+  "name": "Haridwar"
+ },
+ {
+  "id": 58,
+  "name": "Dehradun"
+ },
+ {
+  "id": 59,
+  "name": "Uttarakhand"
+ },
+ {
+  "id": 60,
+  "name": "Lucknow"
+ },
+ {
+  "id": 61,
+  "name": "Patna"
+ },
+ {
+  "id": 62,
+  "name": "Ranchi"
+ },
+ {
+  "id": 63,
+  "name": "Jamshedpur"
+ },
+ {
+  "id": 64,
+  "name": "Chhattisgarh"
+ },
+ {
+  "id": 65,
+  "name": "Bhubaneshwar"
+ },
+ {
+  "id": 66,
+  "name": "Nagpur"
+ },
+ {
+  "id": 67,
+  "name": "Nasik"
+ },
+ {
+  "id": 68,
+  "name": "Navi Mumbai"
+ },
+ {
+  "id": 69,
+  "name": "Thane"
+ },
+ {
+  "id": 70,
+  "name": "Cochin/Kochi"
+ },
+ {
+  "id": 71,
+  "name": "Hosur"
+ },
+ {
+  "id": 72,
+  "name": "Hubli"
+ },
+ {
+  "id": 73,
+  "name": "Mysore"
+ },
+ {
+  "id": 74,
+  "name": "Raipur"
+ },
+ {
+  "id": 75,
+  "name": "Trivandrum/Thiruvananthapuram"
+ },
+ {
+  "id": 76,
+  "name": "Vijayawada"
+ },
+ {
+  "id": 77,
+  "name": "Guntur"
+ },
+ {
+  "id": 78,
+  "name": "Vishakhapatnam/Vizag"
+ },
+ {
+  "id": 79,
+  "name": "Aurangabad"
+ },
+ {
+  "id": 80,
+  "name": "Rajkot"
+ },
+ {
+  "id": 81,
+  "name": "Varanasi/Banaras"
+ },
+ {
+  "id": 82,
+  "name": "Warangal"
+ },
+ {
+  "id": 83,
+  "name": "Madurai"
+ },
+ {
+  "id": 84,
+  "name": "Coimbatore"
+ },
+ {
+  "id": 85,
+  "name": "Pondicherry"
+ },
+ {
+  "id": 86,
+  "name": "Cuttack"
+ },
+ {
+  "id": 121,
+  "name": "Bhopal"
+ },
+ {
+  "id": 123,
+  "name": "Assam"
+ },
+ {
+  "id": 127,
+  "name": "Arunachal Pradesh"
+ },
+ {
+  "id": 129,
+  "name": "West Bengal"
+ },
+ {
+  "id": 130,
+  "name": "Indore"
+ },
+ {
+  "id": 131,
+  "name": "Mohali"
+ },
+ {
+  "id": 132,
+  "name": "Remote"
+ },
+ {
+  "id": 22,
+  "name": "US"
+ },
+ {
+  "id": 23,
+  "name": "UK"
+ },
+ {
+  "id": 24,
+  "name": "Singapore"
+ },
+ {
+  "id": 25,
+  "name": "Middle East"
+ },
+ {
+  "id": 26,
+  "name": "Africa"
+ },
+ {
+  "id": 27,
+  "name": "Malaysia"
+ },
+ {
+  "id": 28,
+  "name": "EU"
+ },
+ {
+  "id": 30,
+  "name": "Hong Kong"
+ },
+ {
+  "id": 90,
+  "name": "Bahrain"
+ },
+ {
+  "id": 91,
+  "name": "Dubai"
+ },
+ {
+  "id": 92,
+  "name": "Kabul"
+ },
+ {
+  "id": 93,
+  "name": "Kuwait"
+ },
+ {
+  "id": 94,
+  "name": "Nigeria"
+ },
+ {
+  "id": 95,
+  "name": "London"
+ },
+ {
+  "id": 96,
+  "name": "Oman"
+ },
+ {
+  "id": 97,
+  "name": "Muscat"
+ },
+ {
+  "id": 98,
+  "name": "Doha"
+ },
+ {
+  "id": 99,
+  "name": "Qatar"
+ },
+ {
+  "id": 100,
+  "name": "Abu Dhabi"
+ },
+ {
+  "id": 101,
+  "name": "Saudi Arabia"
+ },
+ {
+  "id": 102,
+  "name": "Riyadh"
+ },
+ {
+  "id": 103,
+  "name": "Indonesia"
+ },
+ {
+  "id": 104,
+  "name": "Nepal"
+ },
+ {
+  "id": 105,
+  "name": "Bhutan"
+ },
+ {
+  "id": 106,
+  "name": "Dhaka"
+ },
+ {
+  "id": 107,
+  "name": "Bangladesh"
+ },
+ {
+  "id": 108,
+  "name": "China"
+ },
+ {
+  "id": 109,
+  "name": "Afghanistan"
+ },
+ {
+  "id": 110,
+  "name": "Pakistan"
+ },
+ {
+  "id": 111,
+  "name": "Sri Lanka"
+ },
+ {
+  "id": 112,
+  "name": "Ethiopia"
+ },
+ {
+  "id": 113,
+  "name": "Egypt"
+ },
+ {
+  "id": 114,
+  "name": "Kenya"
+ },
+ {
+  "id": 115,
+  "name": "Nairobi"
+ },
+ {
+  "id": 116,
+  "name": "Tanzania"
+ },
+ {
+  "id": 117,
+  "name": "South Africa"
+ },
+ {
+  "id": 118,
+  "name": "Zimbabwe"
+ },
+ {
+  "id": 119,
+  "name": "Zambia"
+ },
+ {
+  "id": 120,
+  "name": "Philippines"
+ },
+ {
+  "id": 100000,
+  "name": "Others"
+ }
+]
