@@ -3,7 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
-const config = require('../config/config');
+const config = require('../src/config');
+const logger = require('../src/utils/logger');
 
 async function main() {
     const conn = await mysql.createConnection({
@@ -17,14 +18,14 @@ async function main() {
 
     for (const file of ['company_profile.sql', 'recruiter_profile.sql']) {
         const sqlPath = path.join(__dirname, '..', 'data', file);
-        console.log(`importing ${file} ...`);
+        logger.info(`importing ${file} ...`);
         await conn.query(fs.readFileSync(sqlPath, 'utf8'));
-        console.log(`${file} imported`);
+        logger.info(`${file} imported`);
     }
 
     const [[c]] = await conn.query('SELECT COUNT(*) AS n FROM company_profile');
     const [[r]] = await conn.query('SELECT COUNT(*) AS n FROM recruiter_profile');
-    console.log(`Done | company_profile=${c.n} rows, recruiter_profile=${r.n} rows`);
+    logger.info(`Done | company_profile=${c.n} rows, recruiter_profile=${r.n} rows`);
     await conn.end();
 }
 

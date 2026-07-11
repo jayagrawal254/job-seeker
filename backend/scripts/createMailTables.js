@@ -1,12 +1,13 @@
-// Creates mail_template + mail_log tables (idempotent) and seeds two starter templates.
+// Creates mail_log table (idempotent) and ensures required columns exist.
 // Usage: npm run setup:mail
 const mysql = require('mysql2/promise');
-const config = require('../config/config');
+const config = require('../src/config');
+const logger = require('../src/utils/logger');
 
 async function main() {
     const conn = await mysql.createConnection({ ...config.db, multipleStatements: true });
 
-    // templates now live in global/templates.json (no table needed)
+    // templates now live in constants/templates.json (no table needed)
     await conn.query(`
 CREATE TABLE IF NOT EXISTS mail_log (
   id INT NOT NULL AUTO_INCREMENT,
@@ -34,17 +35,17 @@ CREATE TABLE IF NOT EXISTS mail_log (
     if (!cols.length) {
         await conn.query(
             'ALTER TABLE mail_log ADD COLUMN message_id VARCHAR(191) DEFAULT NULL, ADD KEY idx_message (message_id)');
-        console.log('added mail_log.message_id column');
+        logger.info('added mail_log.message_id column');
     }
 
     // resume filename attached to this mail (inside resumesDir); NULL = no attachment
     const [attCols] = await conn.query("SHOW COLUMNS FROM mail_log LIKE 'attachment'");
     if (!attCols.length) {
         await conn.query('ALTER TABLE mail_log ADD COLUMN attachment VARCHAR(255) DEFAULT NULL');
-        console.log('added mail_log.attachment column');
+        logger.info('added mail_log.attachment column');
     }
 
-    console.log('mail_log table ready (templates live in global/templates.json)');
+    logger.info('mail_log table ready (templates live in constants/templates.json)');
     await conn.end();
 }
 

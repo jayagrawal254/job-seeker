@@ -11,13 +11,16 @@
  * - Updates each row to sent / failed / bounced as it goes; safe to re-run any time
  *   (only 'pending' rows are picked up; a killed run just leaves the rest pending).
  */
+const config = require('../src/config');
+const mailRepo = require('../src/repositories/mail.repository');
+const recruiterRepo = require('../src/repositories/recruiter.repository');
+const resumeRepo = require('../src/repositories/resume.repository');
+const { createTransporter, DRY_RUN } = require('../src/services/mail.service');
+const parseFrom = require('../src/utils/parseFrom');
+const personalise = require('../src/utils/personalise');
+const logger = require('../src/utils/logger');
 const fs = require('fs');
 const path = require('path');
-const config = require('../config/config');
-const db = require('../db/createconnection');
-const mailDao = require('../dao/mail');
-const resumeDao = require('../dao/resume');
-const { createTransporter, DRY_RUN } = require('../services/mail');
 
 const args = {};
 for (const a of process.argv.slice(2)) {
@@ -32,37 +35,24 @@ const USE_BREVO = !!config.mail.brevoApiKey;
 const DRY = (!USE_BREVO && DRY_RUN) || !!args.dryRun;
 
 // Each mail row carries its own resume filename (mail_log.attachment). Load lazily + cache.
-const attachmentCache = new Map(); // filename -> { filename, contentBase64 } | null
+const attachmentCache = new Map();
 function loadResume(filename) {
     if (!filename) return null;
     if (attachmentCache.has(filename)) return attachmentCache.get(filename);
-    const full = resumeDao.resolveResume(filename);
+    const full = resumeRepo.resolveResume(filename);
     const att = full
         ? { filename: path.basename(full), contentBase64: fs.readFileSync(full).toString('base64') }
         : null;
-    if (!full) log(`WARN resume not found, sending without attachment: ${filename}`);
+    if (!full) logger.warn(`resume not found, sending without attachment: ${filename}`);
     attachmentCache.set(filename, att);
     return att;
 }
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const jitter = () => MIN_WAIT + Math.floor(Math.random() * (MAX_WAIT - MIN_WAIT));
-const log = msg => console.log(`[${new Date().toISOString().replace('T', ' ').slice(0, 19)}] ${msg}`);
 
 // Gmail SMTP rejections that mean the address itself is bad -> bounced, not failed
 const BOUNCE_HINTS = /(recipient|address|mailbox|user).*(reject|not.?exist|unknown|invalid|unavailable)|550|553/i;
-
-function personalise(text, mail, recruiter) {
-    return String(text)
-        .replace(/\{\{\s*recname\s*\}\}/gi, (recruiter && recruiter.recname) || 'there')
-        .replace(/\{\{\s*organisation\s*\}\}/gi, (recruiter && recruiter.organisation) || 'your company');
-}
-
-// "Name <email@x.com>" -> { name, email }
-function parseFrom(from) {
-    const m = String(from).match(/^(.*?)\s*<(.+@.+)>$/);
-    return m ? { name: m[1].trim() || undefined, email: m[2].trim() } : { email: String(from).trim() };
-}
 
 // Brevo transactional send — returns their messageId (used by syncMailEvents.js)
 async function sendViaBrevo(to, subject, html, attachment) {
@@ -83,32 +73,31 @@ async function sendViaBrevo(to, subject, html, attachment) {
 }
 
 async function main() {
-    log(`Start | limit=${LIMIT} gap=${MIN_WAIT / 1000}-${MAX_WAIT / 1000}s ` +
+    logger.info(`Start | limit=${LIMIT} gap=${MIN_WAIT / 1000}-${MAX_WAIT / 1000}s ` +
         `via=${USE_BREVO ? 'brevo-api' : 'smtp'} dryRun=${DRY} (resume attached per-mail)`);
     if (!DRY && !config.mail.from) {
         throw new Error('MAIL_FROM is not set in .env (e.g. "Aditya <you@gmail.com>")');
     }
 
     const transporter = (DRY || USE_BREVO) ? null : createTransporter();
-    const pending = await mailDao.getPendingMails(LIMIT);
-    log(`pending mails picked up: ${pending.length}`);
+    const pending = await mailRepo.findPending(LIMIT);
+    logger.info(`pending mails picked up: ${pending.length}`);
 
     let sent = 0, failed = 0, bounced = 0;
     for (let i = 0; i < pending.length; i++) {
         const mail = pending[i];
-        const [[recruiter]] = await db.query(
-            'SELECT recname, organisation FROM recruiter_profile WHERE id = ?', [mail.recruiter_id]);
+        const recruiter = await recruiterRepo.findPersonalisationData(mail.recruiter_id);
 
-        const subject = personalise(mail.subject, mail, recruiter);
+        const subject = personalise(mail.subject, recruiter);
         // Brevo injects its own open-tracking pixel; only add ours on the SMTP path
         const pixel = USE_BREVO ? '' :
             `<img src="${config.mail.trackingBaseUrl}/api/track/open/${mail.id}.gif"` +
             ' width="1" height="1" style="display:none" alt=""/>';
-        const html = personalise(mail.content, mail, recruiter) + pixel;
+        const html = personalise(mail.content, recruiter) + pixel;
         const attachment = loadResume(mail.attachment);
 
         if (DRY) {
-            log(`[DRY-RUN] #${mail.id} to=${mail.email} subject="${subject}" ` +
+            logger.info(`[DRY-RUN] #${mail.id} to=${mail.email} subject="${subject}" ` +
                 `attach=${attachment ? attachment.filename : 'none'}`);
             sent++;
         } else {
@@ -123,30 +112,30 @@ async function main() {
                             content: attachment.contentBase64, encoding: 'base64' }] } : {})
                     });
                 }
-                await mailDao.markSent(mail.id, messageId);
+                await mailRepo.markSent(mail.id, messageId);
                 sent++;
-                log(`sent #${mail.id} to=${mail.email} (${sent + failed + bounced}/${pending.length})`);
+                logger.info(`sent #${mail.id} to=${mail.email} (${sent + failed + bounced}/${pending.length})`);
             } catch (err) {
                 if (BOUNCE_HINTS.test(err.message)) {
-                    await mailDao.markBounced(mail.id, err.message);
+                    await mailRepo.markBounced(mail.id, err.message);
                     bounced++;
-                    log(`BOUNCED #${mail.id} to=${mail.email}: ${err.message}`);
+                    logger.warn(`BOUNCED #${mail.id} to=${mail.email}: ${err.message}`);
                 } else {
-                    await mailDao.markFailed(mail.id, err.message);
+                    await mailRepo.markFailed(mail.id, err.message);
                     failed++;
-                    log(`FAILED #${mail.id} to=${mail.email}: ${err.message}`);
+                    logger.error(`FAILED #${mail.id} to=${mail.email}: ${err.message}`);
                 }
             }
         }
 
         if (i < pending.length - 1) {
             const wait = jitter();
-            log(`waiting ${Math.round(wait / 1000)}s ...`);
+            logger.info(`waiting ${Math.round(wait / 1000)}s ...`);
             await sleep(wait);
         }
     }
 
-    log(`Done | sent=${sent} failed=${failed} bounced=${bounced}` +
+    logger.info(`Done | sent=${sent} failed=${failed} bounced=${bounced}` +
         (pending.length === LIMIT ? ' | more pending may remain — run again' : ''));
 }
 

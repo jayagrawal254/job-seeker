@@ -11,8 +11,9 @@
  *     invalid/spam                      -> mail_log.status = bounced (reason in error)
  * Matching is by mail_log.message_id (stored by sendPendingMails.js on the Brevo path).
  */
-const config = require('../config/config');
-const mailDao = require('../dao/mail');
+const config = require('../src/config');
+const mailRepo = require('../src/repositories/mail.repository');
+const logger = require('../src/utils/logger');
 
 const args = {};
 for (const a of process.argv.slice(2)) {
@@ -21,7 +22,6 @@ for (const a of process.argv.slice(2)) {
 }
 const DAYS = parseInt(args.days, 10) || 7;
 
-const log = msg => console.log(`[${new Date().toISOString().replace('T', ' ').slice(0, 19)}] ${msg}`);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const EVENT_MAP = [
@@ -48,7 +48,7 @@ async function main() {
     if (!config.mail.brevoApiKey) {
         throw new Error('BREVO_API_KEY is not set in .env — event sync only works with the Brevo send path');
     }
-    log(`Start | pulling last ${DAYS} day(s) of events from Brevo`);
+    logger.info(`Start | pulling last ${DAYS} day(s) of events from Brevo`);
 
     let opened = 0, bounced = 0;
     for (const { event, kind } of EVENT_MAP) {
@@ -58,20 +58,20 @@ async function main() {
             for (const ev of events) {
                 if (!ev.messageId) continue;
                 if (kind === 'opened') {
-                    opened += await mailDao.markOpenedByMessageId(ev.messageId, toSqlDate(ev.date));
+                    opened += await mailRepo.markOpenedByMessageId(ev.messageId, toSqlDate(ev.date));
                 } else {
-                    bounced += await mailDao.markBouncedByMessageId(
+                    bounced += await mailRepo.markBouncedByMessageId(
                         ev.messageId, `${event}${ev.reason ? ': ' + ev.reason : ''}`);
                 }
             }
             if (events.length < 100) break;
             offset += 100;
-            await sleep(300); // gentle on their API
+            await sleep(300);
         }
-        log(`${event}: done`);
+        logger.info(`${event}: done`);
     }
 
-    log(`Done | marked opened=${opened} bounced=${bounced}`);
+    logger.info(`Done | marked opened=${opened} bounced=${bounced}`);
 }
 
 main()
