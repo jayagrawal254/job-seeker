@@ -82,11 +82,11 @@ npm install                 # frontend deps
 
 Every-day: run the app (two terminals)
 
-# terminal 1 — backend API on http://localhost:4000
+# Terminal 1 — Backend API on http://localhost:4000
 cd ~/Documents/Projects/recly-v2/backend
 npm run dev                 # (or: npm start)
 
-# terminal 2 — frontend UI on http://localhost:5173
+# Terminal 2 — Frontend UI on http://localhost:5173
 cd ~/Documents/Projects/recly-v2/frontend
 npm run dev
 
