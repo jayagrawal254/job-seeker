@@ -1,4 +1,4 @@
-# Recly v2
+# Recly v3
 
 Company / recruiter explorer over the hirist export data (`company_profile` + `recruiter_profile`),
 with filters and recruiter mailing. Modeled on the original `recly` / `recly-fe` projects.
@@ -13,10 +13,10 @@ frontend/  Vite + React 19 + antd UI (port 5173, proxies /api to the backend) us
 `backend/data/` contains the SQL dumps generated from
 `companies_recruiters_hirist_merged_active.json` (recruiter-api repo):
 
-- `company_profile.sql` — 28,199 companies. `status` = 1 if any recruiter posted a job
+- `company_profile.sql` - `status` = 1 if any recruiter posted a job
   between 2025-01-01 and 2026-07-01; `min`/`max` = experience range across its posted jobs;
   `minsal`/`maxsal` = salary range; `company_location_ids` = union of job location ids.
-- `recruiter_profile.sql` — 91,668 recruiters. `status` = 1 if that recruiter posted a job
+- `recruiter_profile.sql` — `status` = 1 if that recruiter posted a job
   in the window; `location_ids` = union of location ids of jobs they posted.
 
 > Import into a **local analysis DB only** — the dumps `DROP TABLE IF EXISTS
