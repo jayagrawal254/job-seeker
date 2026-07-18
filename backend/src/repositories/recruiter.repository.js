@@ -67,9 +67,10 @@ async function findActiveByCompanyId(companyId) {
  */
 async function findByIds(ids) {
     if (!ids.length) return [];
+    const placeholders = ids.map(() => '?').join(', ');
     const [rows] = await db.query(
         `SELECT id, recname, email, company_id FROM recruiter_profile
-          WHERE id IN (?) AND email IS NOT NULL AND email != ''`, [ids]);
+          WHERE id IN (${placeholders}) AND email IS NOT NULL AND email != ''`, ids);
     return rows;
 }
 

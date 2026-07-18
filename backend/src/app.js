@@ -13,7 +13,14 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 
 // --- Global middleware ---
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:4173',
+    'https://jayagrawal254.github.io',
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 app.use(requestLogger);
 

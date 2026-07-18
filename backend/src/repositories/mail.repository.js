@@ -37,7 +37,7 @@ async function findPending(limit) {
 
 async function markSent(id, messageId = null) {
     await db.query(
-        `UPDATE mail_log SET status = 'sent', sent_on = NOW(), error = NULL, message_id = ? WHERE id = ?`,
+        `UPDATE mail_log SET status = 'sent', sent_on = datetime('now'), error = NULL, message_id = ? WHERE id = ?`,
         [messageId, id]);
 }
 
@@ -56,22 +56,23 @@ async function markBounced(id, error) {
  */
 async function markOpened(id) {
     await db.query(
-        `UPDATE mail_log SET status = 'opened', opened_on = IFNULL(opened_on, NOW())
+        `UPDATE mail_log SET status = 'opened', opened_on = COALESCE(opened_on, datetime('now'))
           WHERE id = ? AND status IN ('sent', 'opened')`, [id]);
 }
 
 async function markOpenedByMessageId(messageId, when) {
     const [res] = await db.query(
-        `UPDATE mail_log SET status = 'opened', opened_on = IFNULL(opened_on, ?)
+        `UPDATE mail_log SET status = 'opened', opened_on = COALESCE(opened_on, ?)
           WHERE message_id = ? AND status IN ('sent', 'opened')`, [when, messageId]);
-    return res.affectedRows;
+    // mysql2 returns affectedRows; better-sqlite3 shim returns RunResult with changes
+    return res.affectedRows ?? res.changes ?? 0;
 }
 
 async function markBouncedByMessageId(messageId, reason) {
     const [res] = await db.query(
         `UPDATE mail_log SET status = 'bounced', error = ?
           WHERE message_id = ? AND status IN ('sent')`, [String(reason).slice(0, 500), messageId]);
-    return res.affectedRows;
+    return res.affectedRows ?? res.changes ?? 0;
 }
 
 /**
@@ -126,16 +127,19 @@ async function getStatusCounts() {
  * KPI aggregates.
  */
 async function getKpiAggregates() {
+    const today = new Date().toISOString().slice(0, 10);
+    const sevenAgo = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
     const [[kpi]] = await db.query(
         `SELECT
             COUNT(*) AS total,
             SUM(sent_on IS NOT NULL) AS delivered,
             SUM(opened_on IS NOT NULL) AS opened,
-            SUM(DATE(sent_on) = CURDATE()) AS sentToday,
-            SUM(sent_on >= CURDATE() - INTERVAL 6 DAY) AS sentLast7,
-            SUM(DATE(created_on) = CURDATE()) AS queuedToday,
-            SUM(created_on >= CURDATE() - INTERVAL 6 DAY) AS queuedLast7
-         FROM mail_log`);
+            SUM(DATE(sent_on) = ?) AS sentToday,
+            SUM(sent_on >= ?) AS sentLast7,
+            SUM(DATE(created_on) = ?) AS queuedToday,
+            SUM(created_on >= ?) AS queuedLast7
+         FROM mail_log`,
+        [today, sevenAgo, today, sevenAgo]);
     return kpi;
 }
 
@@ -143,9 +147,10 @@ async function getKpiAggregates() {
  * Daily counts for a given date column.
  */
 async function getDailyCounts(column, days) {
+    const since = new Date(Date.now() - (days - 1) * 86400000).toISOString().slice(0, 10);
     const [rows] = await db.query(
         `SELECT DATE(${column}) AS d, COUNT(*) AS n FROM mail_log
-          WHERE ${column} >= CURDATE() - INTERVAL ? DAY GROUP BY DATE(${column})`, [days - 1]);
+          WHERE ${column} >= ? GROUP BY DATE(${column})`, [since]);
     return rows;
 }
 
@@ -153,8 +158,7 @@ async function getDailyCounts(column, days) {
  * Get the current date from MySQL (for timezone-consistent daily breakdowns).
  */
 async function getServerDate() {
-    const [[{ today }]] = await db.query('SELECT CURDATE() AS today');
-    return today instanceof Date ? today.toISOString().slice(0, 10) : String(today).slice(0, 10);
+    return new Date().toISOString().slice(0, 10);
 }
 
 module.exports = {

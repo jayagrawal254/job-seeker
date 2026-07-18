@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: recly-backend
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 4000
+      - key: NODE_ENV
+        value: production
+      # DATABASE_URL — leave blank to use bundled dummy.db (SQLite)
+      # Set to mysql://user:pass@host:3306/db to use a real MySQL database
+      - key: DATABASE_URL
+        value: ""

@@ -9,6 +9,7 @@ import { ActivityStatusTag } from '../../components/StatusTag';
 import LocationTags from '../../components/LocationTags';
 import { getPresets, savePreset, deletePreset, loadPreset } from '../../utils/filterPresets';
 import { useLocations } from '../../context/LocationContext';
+import CustomDbUrlButton from '../../components/CustomDbUrlButton.jsx';
 import { EMPTY_FILTERS } from '../../constants';
 import { dateOnly } from '../../utils/formatters';
 import { useCompanies } from '../../hooks/useCompanies';
@@ -187,7 +188,8 @@ export default function CompaniesPage() {
           </Col>
           <Col xs={24} md={12}>
             <Space wrap>
-              <Button type="primary" onClick={() => loadCompanies(1, filters, sort)}>Apply filters</Button>
+               <Button type="primary" onClick={() => loadCompanies(1, filters, sort)}>Apply filters</Button>
+               <CustomDbUrlButton />
               <Button onClick={() => {
                 setFilters(EMPTY_FILTERS); setOptions([]); setSelectedPreset(undefined); loadCompanies(1, EMPTY_FILTERS);
               }}>Reset</Button>
